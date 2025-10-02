@@ -206,6 +206,7 @@ public class CategoryServiceImpl implements CategoryService {
         try {
             // In a real application with a proper API, we would use Jackson or a similar library
             // to convert the response to a DTO. For now, we'll use reflection to access the fields.
+            // TODO: Replace reflection-based conversion with a proper mapping library (e.g., ModelMapper, MapStruct)
 
             // Assuming categoryData is a Map with the category properties
             if (categoryData instanceof Map) {
@@ -260,8 +261,8 @@ public class CategoryServiceImpl implements CategoryService {
 
             return new CategoryDTO(id, name, description);
         } catch (Exception e) {
-            // Log the error and return a default category
-            System.err.println("Error converting category data: " + e.getMessage());
+            // Log the error and return null
+            log.error("Error converting category data: {}", e.getMessage(), e);
             return null;
         }
     }
@@ -286,12 +287,17 @@ public class CategoryServiceImpl implements CategoryService {
             return null;
         }
 
-        // Create a Map with the category properties
-        Map<String, Object> categoryMap = new HashMap<>();
-        categoryMap.put("id", categoryDTO.getId());
-        categoryMap.put("name", categoryDTO.getName());
-        categoryMap.put("description", categoryDTO.getDescription());
+        try {
+            // Create a Map with the category properties
+            Map<String, Object> categoryMap = new HashMap<>();
+            categoryMap.put("id", categoryDTO.getId());
+            categoryMap.put("name", categoryDTO.getName() != null ? categoryDTO.getName() : "");
+            categoryMap.put("description", categoryDTO.getDescription() != null ? categoryDTO.getDescription() : "");
 
-        return categoryMap;
+            return categoryMap;
+        } catch (Exception e) {
+            log.error("Error converting CategoryDTO to request object: {}", e.getMessage(), e);
+            throw new IllegalArgumentException("Failed to convert CategoryDTO to request object", e);
+        }
     }
 }
