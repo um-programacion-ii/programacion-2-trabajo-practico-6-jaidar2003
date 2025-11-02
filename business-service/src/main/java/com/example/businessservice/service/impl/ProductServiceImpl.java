@@ -2,6 +2,7 @@ package com.example.businessservice.service.impl;
 
 import com.example.businessservice.client.ProductClient;
 import com.example.businessservice.dto.ProductDTO;
+import com.example.businessservice.dto.CategoryDTO;
 import com.example.businessservice.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
@@ -203,29 +204,146 @@ public class ProductServiceImpl implements ProductService {
     // In a real implementation, you would use a mapper like ModelMapper or MapStruct
     
     private ProductDTO convertToProductDTO(Object productData) {
-        // This is a simplified implementation
-        // In a real application, you would use a proper mapping library
-        // or implement a more robust conversion logic
-        
-        // For now, we'll return a dummy product
-        return new ProductDTO(1L, "Sample Product", "Sample Description", new BigDecimal("9.99"));
+        if (productData == null) {
+            return null;
+        }
+        try {
+            Long id = null;
+            String name = null;
+            String description = null;
+            BigDecimal price = null;
+            CategoryDTO categoryDTO = null;
+
+            // Case 1: The response is a Map coming from Jackson default mapping
+            if (productData instanceof java.util.Map<?, ?> map) {
+                Object idObj = map.get("id");
+                if (idObj instanceof Number) {
+                    id = ((Number) idObj).longValue();
+                }
+                Object nameObj = map.get("name");
+                if (nameObj instanceof String) {
+                    name = (String) nameObj;
+                }
+                Object descObj = map.get("description");
+                if (descObj instanceof String) {
+                    description = (String) descObj;
+                }
+                Object priceObj = map.get("price");
+                if (priceObj instanceof Number) {
+                    price = java.math.BigDecimal.valueOf(((Number) priceObj).doubleValue());
+                } else if (priceObj instanceof String) {
+                    try { price = new BigDecimal((String) priceObj); } catch (Exception ignored) {}
+                }
+                Object categoryObj = map.get("category");
+                categoryDTO = convertToCategoryDTO(categoryObj);
+                return new ProductDTO(id, name, description, price, categoryDTO);
+            }
+
+            // Case 2: Try reflection on a POJO
+            Class<?> clazz = productData.getClass();
+            try {
+                java.lang.reflect.Method getId = clazz.getMethod("getId");
+                Object idObj = getId.invoke(productData);
+                if (idObj instanceof Number) {
+                    id = ((Number) idObj).longValue();
+                }
+            } catch (Exception ignored) { }
+            try {
+                java.lang.reflect.Method getName = clazz.getMethod("getName");
+                Object nameObj = getName.invoke(productData);
+                if (nameObj instanceof String) {
+                    name = (String) nameObj;
+                }
+            } catch (Exception ignored) { }
+            try {
+                java.lang.reflect.Method getDescription = clazz.getMethod("getDescription");
+                Object descObj = getDescription.invoke(productData);
+                if (descObj instanceof String) {
+                    description = (String) descObj;
+                }
+            } catch (Exception ignored) { }
+            try {
+                java.lang.reflect.Method getPrice = clazz.getMethod("getPrice");
+                Object priceObj = getPrice.invoke(productData);
+                if (priceObj instanceof BigDecimal) {
+                    price = (BigDecimal) priceObj;
+                } else if (priceObj instanceof Number) {
+                    price = BigDecimal.valueOf(((Number) priceObj).doubleValue());
+                } else if (priceObj instanceof String) {
+                    try { price = new BigDecimal((String) priceObj); } catch (Exception ignored) {}
+                }
+            } catch (Exception ignored) { }
+            try {
+                java.lang.reflect.Method getCategory = clazz.getMethod("getCategory");
+                Object categoryObj = getCategory.invoke(productData);
+                categoryDTO = convertToCategoryDTO(categoryObj);
+            } catch (Exception ignored) { }
+
+            return new ProductDTO(id, name, description, price, categoryDTO);
+        } catch (Exception e) {
+            System.err.println("Error converting product data: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private CategoryDTO convertToCategoryDTO(Object categoryData) {
+        if (categoryData == null) {
+            return null;
+        }
+        try {
+            Long id = null;
+            String name = null;
+            String description = null;
+
+            if (categoryData instanceof java.util.Map<?, ?> map) {
+                Object idObj = map.get("id");
+                if (idObj instanceof Number) { id = ((Number) idObj).longValue(); }
+                Object nameObj = map.get("name");
+                if (nameObj instanceof String) { name = (String) nameObj; }
+                Object descObj = map.get("description");
+                if (descObj instanceof String) { description = (String) descObj; }
+                return new CategoryDTO(id, name, description);
+            }
+
+            Class<?> clazz = categoryData.getClass();
+            try {
+                java.lang.reflect.Method getId = clazz.getMethod("getId");
+                Object idObj = getId.invoke(categoryData);
+                if (idObj instanceof Number) { id = ((Number) idObj).longValue(); }
+            } catch (Exception ignored) { }
+            try {
+                java.lang.reflect.Method getName = clazz.getMethod("getName");
+                Object nameObj = getName.invoke(categoryData);
+                if (nameObj instanceof String) { name = (String) nameObj; }
+            } catch (Exception ignored) { }
+            try {
+                java.lang.reflect.Method getDescription = clazz.getMethod("getDescription");
+                Object descObj = getDescription.invoke(categoryData);
+                if (descObj instanceof String) { description = (String) descObj; }
+            } catch (Exception ignored) { }
+            return new CategoryDTO(id, name, description);
+        } catch (Exception e) {
+            System.err.println("Error converting category data: " + e.getMessage());
+            return null;
+        }
     }
     
     private List<ProductDTO> convertToProductDTOList(List<Object> productDataList) {
-        // This is a simplified implementation
-        // In a real application, you would convert each item in the list
-        
-        // For now, we'll return a list with a single dummy product
-        return Collections.singletonList(
-                new ProductDTO(1L, "Sample Product", "Sample Description", new BigDecimal("9.99"))
-        );
+        if (productDataList == null) {
+            return Collections.emptyList();
+        }
+        java.util.List<ProductDTO> result = new java.util.ArrayList<>();
+        for (Object item : productDataList) {
+            ProductDTO dto = convertToProductDTO(item);
+            if (dto != null) {
+                result.add(dto);
+            }
+        }
+        return result;
     }
     
     private Object convertFromProductDTO(ProductDTO productDTO) {
-        // This is a simplified implementation
-        // In a real application, you would convert the DTO to the format expected by the data service
-        
-        // For now, we'll just return the DTO itself
+        // Minimal conversion: send the DTO as-is; the data-service can accept compatible JSON
         return productDTO;
     }
 }

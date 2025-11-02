@@ -16,11 +16,11 @@ INSERT INTO products (id, name, description, price, category_id) VALUES
 (5, 'Programming Book', 'Learn programming with this comprehensive guide', 39.99, 3),
 (6, 'Coffee Maker', 'Automatic coffee maker with timer', 89.99, 4);
 
--- Insert inventory items
-INSERT INTO inventory (id, product_id, quantity, location, stock_minimum, last_updated) VALUES 
-(1, 1, 25, 'Warehouse A', 10, CURRENT_TIMESTAMP()),
-(2, 2, 15, 'Warehouse A', 5, CURRENT_TIMESTAMP()),
-(3, 3, 100, 'Warehouse B', 20, CURRENT_TIMESTAMP()),
-(4, 4, 75, 'Warehouse B', 15, CURRENT_TIMESTAMP()),
-(5, 5, 50, 'Warehouse C', 10, CURRENT_TIMESTAMP()),
-(6, 6, 30, 'Warehouse C', 5, CURRENT_TIMESTAMP());
+-- Insert inventory items (match JPA entity: table 'inventories')
+INSERT INTO inventories (id, product_id, quantity, location) VALUES 
+(1, 1, 25, 'Warehouse A'),
+(2, 2, 15, 'Warehouse A'),
+(3, 3, 100, 'Warehouse B'),
+(4, 4, 75, 'Warehouse B'),
+(5, 5, 50, 'Warehouse C'),
+(6, 6, 30, 'Warehouse C');
